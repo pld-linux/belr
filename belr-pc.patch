@@ -1,0 +1,14 @@
+--- belr-0.1.3-0/belr.pc.in.orig	2016-10-19 17:22:25.000000000 +0200
++++ belr-0.1.3-0/belr.pc.in	2019-06-02 20:53:27.903631254 +0200
+@@ -1,9 +1,9 @@
+ # This is a comment
+ prefix=@CMAKE_INSTALL_PREFIX@
+ 
+-Name:  @PROJECT_NAME@
++Name: @PACKAGE_NAME@
+ Description: Belr is Belledonne Communications' language recognition library
+ Version: @PROJECT_VERSION@
+ Libs: -L@CMAKE_INSTALL_FULL_LIBDIR@ -lbelr
+-Libs.private: @LIBS_PRIVATE@
++Libs.private: @BCTOOLBOX_LIBS@
+ Cflags: -I@CMAKE_INSTALL_FULL_INCLUDEDIR@
