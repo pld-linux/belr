@@ -5,21 +5,21 @@
 Summary:	Belledonne Communications' language recognition library
 Summary(pl.UTF-8):	Biblioteka rozpoznawania języków Belledonne Communications
 Name:		belr
-Version:	0.1.3
+Version:	4.5.15
 Release:	1
-License:	GPL v2+
+License:	GPL v3+
 Group:		Libraries
-Source0:	https://linphone.org/releases/sources/belr/%{name}-%{version}.tar.gz
-# Source0-md5:	91dc921d48db2b8337bab56996fe8800
-Patch0:		%{name}-pc.patch
+#Source0Download: https://gitlab.linphone.org/BC/public/belr/-/tags
+Source0:	https://gitlab.linphone.org/BC/public/belr/-/archive/%{version}/%{name}-%{version}.tar.bz2
+# Source0-md5:	2535ccc46f621226d3bc44d7e2dd7f02
+Patch0:		%{name}-static.patch
 URL:		https://linphone.org/
-BuildRequires:	autoconf >= 2.63
-BuildRequires:	automake
-BuildRequires:	bctoolbox-devel >= 0.0.3
+BuildRequires:	bctoolbox-devel >= 0.0.5
+BuildRequires:	cmake >= 3.1
 BuildRequires:	libstdc++-devel >= 6:4.7
-BuildRequires:	libtool >= 2:2
 BuildRequires:	pkgconfig
-Requires:	bctoolbox >= 0.0.3
+BuildRequires:	udev-devel
+Requires:	bctoolbox >= 0.0.5
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
@@ -44,6 +44,7 @@ Summary:	Header files for belr library
 Summary(pl.UTF-8):	Pliki nagłówkowe biblioteki belr
 Group:		Development/Libraries
 Requires:	%{name} = %{version}-%{release}
+Requires:	bctoolbox-devel >= 0.0.5
 Requires:	libstdc++-devel >= 6:4.7
 
 %description devel
@@ -65,28 +66,37 @@ Static belr library.
 Statyczna biblioteka belr.
 
 %prep
-%setup -q -n %{name}-%{version}-0
+%setup -q
 %patch0 -p1
 
 %build
-%{__libtoolize}
-%{__aclocal} -I m4
-%{__autoconf}
-%{__autoheader}
-%{__automake}
-%configure \
-	--disable-silent-rules \
-	%{?with_static_libs:--enable-static}
+install -d build
+cd build
+%cmake .. \
+	%{!?with_static_libs:-DENABLE_STATIC=OFF} \
+	-DENABLE_TESTS=OFF
 
 %{__make}
 
 %install
 rm -rf $RPM_BUILD_ROOT
 
-%{__make} install \
+%{__make} -C build install \
 	DESTDIR=$RPM_BUILD_ROOT
 
-%{__rm} $RPM_BUILD_ROOT%{_libdir}/libbelr.la
+# disable completeness check incompatible with split packaging
+%{__sed} -i -e '/^foreach(target .*IMPORT_CHECK_TARGETS/,/^endforeach/d; /^unset(_IMPORT_CHECK_TARGETS)/d' $RPM_BUILD_ROOT%{_libdir}/cmake/belr/belrTargets.cmake
+
+# missing from cmake
+test ! -f $RPM_BUILD_ROOT%{_pkgconfigdir}/belr.pc
+install -d $RPM_BUILD_ROOT%{_pkgconfigdir}
+%{__sed} -e 's,@CMAKE_INSTALL_PREFIX@,%{_prefix},' \
+	-e 's,@PROJECT_NAME@,belr,' \
+	-e 's,@PROJECT_VERSION@,%{version},' \
+	-e 's,@CMAKE_INSTALL_FULL_LIBDIR@,%{_libdir},' \
+	-e 's,@LIBS_PRIVATE@,-lbctoolbox,' \
+	-e 's,@CMAKE_INSTALL_FULL_INCLUDEDIR@,%{_includedir},' \
+	belr.pc.in >$RPM_BUILD_ROOT%{_pkgconfigdir}/belr.pc
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -96,16 +106,17 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(644,root,root,755)
-%doc NEWS README.md
+%doc CHANGELOG.md README.md
+%attr(755,root,root) %{_bindir}/belr-compiler
 %attr(755,root,root) %{_bindir}/belr-parse
-%attr(755,root,root) %{_libdir}/libbelr.so.*.*.*
-%attr(755,root,root) %ghost %{_libdir}/libbelr.so.0
+%attr(755,root,root) %{_libdir}/libbelr.so.1
 
 %files devel
 %defattr(644,root,root,755)
 %attr(755,root,root) %{_libdir}/libbelr.so
 %{_includedir}/belr
 %{_pkgconfigdir}/belr.pc
+%{_libdir}/cmake/belr
 
 %if %{with static_libs}
 %files static
