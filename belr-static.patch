@@ -1,0 +1,27 @@
+--- belr-4.5.15/src/CMakeLists.txt.orig	2020-10-22 16:31:51.000000000 +0200
++++ belr-4.5.15/src/CMakeLists.txt	2021-06-15 21:41:34.307278254 +0200
+@@ -44,13 +44,20 @@
+ endif()
+ 
+ if(ENABLE_STATIC)
+-	add_library(belr STATIC ${BELR_HEADER_FILES} ${BELR_SOURCE_FILES_C} ${BELR_SOURCE_FILES_CXX})
+-	set_target_properties(belr PROPERTIES OUTPUT_NAME belr)
+-	target_link_libraries(belr PUBLIC ${LIBS})
+-	target_include_directories(belr INTERFACE
++	add_library(belr-static STATIC ${BELR_HEADER_FILES} ${BELR_SOURCE_FILES_C} ${BELR_SOURCE_FILES_CXX})
++	set_target_properties(belr-static PROPERTIES OUTPUT_NAME belr)
++	target_link_libraries(belr-static PUBLIC ${LIBS})
++	target_include_directories(belr-static INTERFACE
+ 		$<INSTALL_INTERFACE:include>
+ 		$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+ 	)
++install(TARGETS belr-static EXPORT ${EXPORT_TARGET_NAME}Targets
++	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
++	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
++	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
++	FRAMEWORK DESTINATION Frameworks
++	PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
++)
+ endif()
+ if(ENABLE_SHARED)
+ 	add_library(belr SHARED ${BELR_HEADER_FILES} ${BELR_SOURCE_FILES_C} ${BELR_SOURCE_FILES_CXX})
