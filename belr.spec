@@ -5,13 +5,13 @@
 Summary:	Belledonne Communications' language recognition library
 Summary(pl.UTF-8):	Biblioteka rozpoznawania języków Belledonne Communications
 Name:		belr
-Version:	4.5.15
+Version:	4.5.20
 Release:	1
 License:	GPL v3+
 Group:		Libraries
 #Source0Download: https://gitlab.linphone.org/BC/public/belr/-/tags
 Source0:	https://gitlab.linphone.org/BC/public/belr/-/archive/%{version}/%{name}-%{version}.tar.bz2
-# Source0-md5:	2535ccc46f621226d3bc44d7e2dd7f02
+# Source0-md5:	5779ada843c4c396250fded9a2520c12
 Patch0:		%{name}-static.patch
 URL:		https://linphone.org/
 BuildRequires:	bctoolbox-devel >= 0.0.5
@@ -70,9 +70,11 @@ Statyczna biblioteka belr.
 %patch0 -p1
 
 %build
-install -d build
-cd build
+install -d builddir
+cd builddir
+# cmake build relies on relative CMAKE_INSTALL_DATADIR
 %cmake .. \
+	-DCMAKE_INSTALL_DATADIR=share \
 	%{!?with_static_libs:-DENABLE_STATIC=OFF} \
 	-DENABLE_TESTS=OFF
 
@@ -81,8 +83,11 @@ cd build
 %install
 rm -rf $RPM_BUILD_ROOT
 
-%{__make} -C build install \
+%{__make} -C builddir install \
 	DESTDIR=$RPM_BUILD_ROOT
+
+# dir for grammars (see CMakeLists.txt)
+install -d $RPM_BUILD_ROOT%{_datadir}/belr/grammars
 
 # disable completeness check incompatible with split packaging
 %{__sed} -i -e '/^foreach(target .*IMPORT_CHECK_TARGETS/,/^endforeach/d; /^unset(_IMPORT_CHECK_TARGETS)/d' $RPM_BUILD_ROOT%{_libdir}/cmake/belr/belrTargets.cmake
@@ -110,6 +115,8 @@ rm -rf $RPM_BUILD_ROOT
 %attr(755,root,root) %{_bindir}/belr-compiler
 %attr(755,root,root) %{_bindir}/belr-parse
 %attr(755,root,root) %{_libdir}/libbelr.so.1
+%dir %{_datadir}/belr
+%dir %{_datadir}/belr/grammars
 
 %files devel
 %defattr(644,root,root,755)
