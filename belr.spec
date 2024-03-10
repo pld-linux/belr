@@ -5,21 +5,20 @@
 Summary:	Belledonne Communications' language recognition library
 Summary(pl.UTF-8):	Biblioteka rozpoznawania języków Belledonne Communications
 Name:		belr
-Version:	5.2.51
+Version:	5.3.29
 Release:	1
 License:	GPL v3+
 Group:		Libraries
 #Source0Download: https://gitlab.linphone.org/BC/public/belr/-/tags
 Source0:	https://gitlab.linphone.org/BC/public/belr/-/archive/%{version}/%{name}-%{version}.tar.bz2
-# Source0-md5:	053d6cd98345c7a6c80ca4c67f71883e
-Patch0:		%{name}-static.patch
+# Source0-md5:	8fa28394bab7c78c5821ceb0caac95d8
 URL:		https://linphone.org/
-BuildRequires:	bctoolbox-devel >= 0.0.5
-BuildRequires:	cmake >= 3.1
-BuildRequires:	libstdc++-devel >= 6:4.7
+BuildRequires:	bctoolbox-devel >= 5.3.0
+BuildRequires:	cmake >= 3.22
+BuildRequires:	libstdc++-devel >= 6:7
 BuildRequires:	pkgconfig
 BuildRequires:	udev-devel
-Requires:	bctoolbox >= 0.0.5
+Requires:	bctoolbox >= 5.3.0
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
@@ -44,8 +43,8 @@ Summary:	Header files for belr library
 Summary(pl.UTF-8):	Pliki nagłówkowe biblioteki belr
 Group:		Development/Libraries
 Requires:	%{name} = %{version}-%{release}
-Requires:	bctoolbox-devel >= 0.0.5
-Requires:	libstdc++-devel >= 6:4.7
+Requires:	bctoolbox-devel >= 5.3.0
+Requires:	libstdc++-devel >= 6:7
 
 %description devel
 Header files for belr library.
@@ -67,30 +66,37 @@ Statyczna biblioteka belr.
 
 %prep
 %setup -q
-%patch0 -p1
 
 %build
-install -d builddir
-cd builddir
-# cmake build relies on relative CMAKE_INSTALL_DATADIR
-%cmake .. \
+%if %{with static_libs}
+%cmake -B builddir-static \
+	-DBUILD_SHARED_LIBS=OFF \
 	-DCMAKE_INSTALL_DATADIR=share \
-	%{!?with_static_libs:-DENABLE_STATIC=OFF} \
-	-DENABLE_TESTS=OFF
+	-DENABLE_UNIT_TESTS=OFF
 
-%{__make}
+%{__make} -C builddir-static
+%endif
+
+# cmake build relies on relative CMAKE_INSTALL_DATADIR
+%cmake -B builddir \
+	-DCMAKE_INSTALL_DATADIR=share \
+	-DENABLE_UNIT_TESTS=OFF
+
+%{__make} -C builddir
 
 %install
 rm -rf $RPM_BUILD_ROOT
+
+%if %{with static_libs}
+%{__make} -C builddir-static install \
+	DESTDIR=$RPM_BUILD_ROOT
+%endif
 
 %{__make} -C builddir install \
 	DESTDIR=$RPM_BUILD_ROOT
 
 # dir for grammars (see CMakeLists.txt)
 install -d $RPM_BUILD_ROOT%{_datadir}/belr/grammars
-
-# disable completeness check incompatible with split packaging
-%{__sed} -i -e '/^foreach(target .*IMPORT_CHECK_TARGETS/,/^endforeach/d; /^unset(_IMPORT_CHECK_TARGETS)/d' $RPM_BUILD_ROOT%{_libdir}/cmake/belr/belrTargets.cmake
 
 # missing from cmake
 test ! -f $RPM_BUILD_ROOT%{_pkgconfigdir}/belr.pc
@@ -123,7 +129,7 @@ rm -rf $RPM_BUILD_ROOT
 %attr(755,root,root) %{_libdir}/libbelr.so
 %{_includedir}/belr
 %{_pkgconfigdir}/belr.pc
-%{_libdir}/cmake/belr
+%{_libdir}/cmake/Belr
 
 %if %{with static_libs}
 %files static
