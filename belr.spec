@@ -5,13 +5,13 @@
 Summary:	Belledonne Communications' language recognition library
 Summary(pl.UTF-8):	Biblioteka rozpoznawania języków Belledonne Communications
 Name:		belr
-Version:	5.3.104
+Version:	5.4.17
 Release:	1
 License:	GPL v3+
 Group:		Libraries
 #Source0Download: https://gitlab.linphone.org/BC/public/belr/-/tags
 Source0:	https://gitlab.linphone.org/BC/public/belr/-/archive/%{version}/%{name}-%{version}.tar.bz2
-# Source0-md5:	3b367f2ec1cff549c1de3c0b5abda75a
+# Source0-md5:	3ca2b418ffd2ad0f03edf869c2d89630
 URL:		https://linphone.org/
 BuildRequires:	bctoolbox-devel >= 5.3.0
 BuildRequires:	cmake >= 3.22
